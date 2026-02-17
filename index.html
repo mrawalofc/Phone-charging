@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xiaomi HyperCharge Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700&display=swap');
+
+        :root {
+            --mi-orange: #FF6900;
+            --mi-blue: #00D2FF;
+            --mi-dark: #0a0a0a;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Inter', sans-serif;
+            cursor: crosshair;
+        }
+
+        /* Cinematic Background */
+        .bg-cinematic {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000000 100%);
+            z-index: -2;
+        }
+
+        .vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 40%, #000000 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Phone Container with 3D Tilt */
+        .scene {
+            perspective: 1000px;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phone-wrapper {
+            position: relative;
+            width: 320px;
+            height: 640px;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            cursor: pointer;
+        }
+
+        /* The Phone Body */
+        .phone-frame {
+            position: absolute;
+            inset: 0;
+            border-radius: 40px;
+            background: linear-gradient(145deg, #2a2a2a, #000000);
+            box-shadow: 
+                0 0 0 2px #333,
+                0 20px 50px rgba(0,0,0,0.8),
+                0 0 100px rgba(0, 210, 255, 0.1);
+            overflow: hidden;
+            border: 4px solid #1a1a1a;
+        }
+
+        /* Screen Reflection */
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.05) 45%, transparent 50%);
+            transform: rotate(30deg);
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        /* Screen Content */
+        .screen {
+            position: absolute;
+            inset: 2px;
+            background: #000;
+            border-radius: 36px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* Charging Animation Core */
+        .charging-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .energy-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: var(--mi-blue);
+            border-right-color: rgba(0, 210, 255, 0.3);
+            animation: spin 3s linear infinite;
+        }
+
+        .ring-1 { width: 100%; height: 100%; animation-duration: 3s; box-shadow: 0 0 20px rgba(0, 210, 255, 0.2); }
+        .ring-2 { width: 80%; height: 80%; animation-duration: 5s; animation-direction: reverse; border-top-color: #fff; }
+        .ring-3 { width: 60%; height: 60%; animation-duration: 2s; border-style: dashed; opacity: 0.5; }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Liquid Fill Effect */
+        .liquid-bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, rgba(0, 210, 255, 0.2), transparent);
+            transition: height 0.3s ease;
+            z-index: 0;
+        }
+
+        .percentage {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(to bottom, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            z-index: 2;
+            position: relative;
+            text-shadow: 0 0 30px rgba(0, 210, 255, 0.5);
+        }
+
+        .charging-text {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--mi-blue);
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; text-shadow: 0 0 10px var(--mi-blue); }
+        }
+
+        /* Cable */
+        .cable {
+            position: absolute;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 100px;
+            background: #333;
+            z-index: -1;
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .cable::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 20px;
+            background: #555;
+            border-radius: 4px;
+        }
+
+        .cable.connected {
+            bottom: -20px;
+        }
+
+        /* Weather Canvas */
+        #weatherCanvas {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* UI Hints */
+        .hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.3);
+            font-size: 0.8rem;
+            text-align: center;
+            pointer-events: none;
+            letter-spacing: 1px;
+        }
+
+        .mode-indicator {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .mode-btn.active {
+            background: rgba(0, 210, 255, 0.2);
+            border-color: var(--mi-blue);
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+        }
+
+        /* Glitch Effect for Text */
+        .glitch {
+            position: relative;
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 30px;
+            padding: 6px 12px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(5px);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #333;
+            transition: background 0.3s;
+        }
+
+        .status-dot.active {
+            background: #00ff88;
+            box-shadow: 0 0 8px #00ff88;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Background Elements -->
+    <div class="bg-cinematic"></div>
+    <div class="vignette"></div>
+    <canvas id="weatherCanvas"></canvas>
+
+    <!-- UI Controls -->
+    <div class="mode-indicator">
+        <button class="mode-btn active" id="rainBtn" onclick="setWeather('rain')">RAIN</button>
+        <button class="mode-btn" id="snowBtn" onclick="setWeather('snow')">SNOW</button>
+    </div>
+
+    <div class="hint">
+        CLICK PHONE TO TOGGLE CHARGING • CLICK ANYWHERE FOR WEATHER
+    </div>
+
+    <!-- Main Scene -->
+    <div class="scene" id="scene">
+        <div class="phone-wrapper" id="phone">
+            <div class="cable" id="cable"></div>
+            
+            <div class="phone-frame">
+                <div class="screen">
+                    
+                    <!-- Status -->
+                    <div class="status-badge">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">DISCONNECTED</span>
+                    </div>
+
+                    <!-- Time -->
+                    <div style="position: absolute; top: 60px; font-size: 1.2rem; opacity: 0.6; font-weight: 300;">
+                        14:20
+                    </div>
+
+                    <!-- Charging Animation -->
+                    <div class="charging-container">
+                        <div class="liquid-bg" id="liquid"></div>
+                        <div class="energy-ring ring-1"></div>
+                        <div class="energy-ring ring-2"></div>
+                        <div class="energy-ring ring-3"></div>
+                        <div class="percentage" id="percent">0%</div>
+                    </div>
+
+                    <div class="charging-text" id="chargeLabel">HyperCharge</div>
+
+                    <!-- Battery Stats -->
+                    <div style="position: absolute; bottom: 60px; display: flex; gap: 30px; text-align: center;">
+                        <div>
+                            <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 4px;">VOLTAGE</div>
+                            <div style="font-weight: 600;">5.2V</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 4px;">CURRENT</div>
+                            <div style="font-weight: 600;" id="current">0.0A</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 4px;">TEMP</div>
+                            <div style="font-weight: 600;">34°C</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --- Audio Engine (Synthesized Sounds) --- */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'connect') {
+                // High-tech charging start sound
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.3);
+                
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'disconnect') {
+                // Power down sound
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            }
+        }
+
+        /* --- Charging Logic --- */
+        let isCharging = false;
+        let batteryLevel = 0;
+        let chargeInterval;
+        const phoneEl = document.getElementById('phone');
+        const cableEl = document.getElementById('cable');
+        const percentEl = document.getElementById('percent');
+        const liquidEl = document.getElementById('liquid');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const currentEl = document.getElementById('current');
+        const chargeLabel = document.getElementById('chargeLabel');
+
+        phoneEl.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent weather toggle
+            toggleCharging();
+        });
+
+        function toggleCharging() {
+            isCharging = !isCharging;
+            
+            if (isCharging) {
+                playSound('connect');
+                cableEl.classList.add('connected');
+                statusDot.classList.add('active');
+                statusText.innerText = "FAST CHARGING";
+                statusText.style.color = "#00ff88";
+                chargeLabel.style.opacity = "1";
+                currentEl.innerText = "6.2A";
+                
+                // Start charging animation
+                chargeInterval = setInterval(() => {
+                    if (batteryLevel < 100) {
+                        batteryLevel += 1;
+                        updateBatteryUI();
+                    } else {
+                        statusText.innerText = "CHARGED";
+                        currentEl.innerText = "0.0A";
+                    }
+                }, 100);
+            } else {
+                playSound('disconnect');
+                cableEl.classList.remove('connected');
+                statusDot.classList.remove('active');
+                statusText.innerText = "DISCONNECTED";
+                statusText.style.color = "#aaa";
+                chargeLabel.style.opacity = "0.5";
+                currentEl.innerText = "0.0A";
+                clearInterval(chargeInterval);
+            }
+        }
+
+        function updateBatteryUI() {
+            percentEl.innerText = batteryLevel + "%";
+            liquidEl.style.height = batteryLevel + "%";
+            
+            // Color shift based on percentage
+            if (batteryLevel > 80) {
+                liquidEl.style.background = "linear-gradient(to top, rgba(0, 255, 136, 0.3), transparent)";
+                document.querySelector('.percentage').style.textShadow = "0 0 30px rgba(0, 255, 136, 0.5)";
+            } else {
+                liquidEl.style.background = "linear-gradient(to top, rgba(0, 210, 255, 0.2), transparent)";
+                document.querySelector('.percentage').style.textShadow = "0 0 30px rgba(0, 210, 255, 0.5)";
+            }
+        }
+
+        /* --- 3D Tilt Effect --- */
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.pageX) / 25;
+            const y = (window.innerHeight / 2 - e.pageY) / 25;
+            phoneEl.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+        });
+
+        /* --- Weather Particle System --- */
+        const canvas = document.getElementById('weatherCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let weatherMode = 'rain'; // 'rain' or 'snow'
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * -height;
+                this.speed = Math.random() * 5 + 5;
+                this.size = Math.random() * 2 + 1;
+                this.drift = Math.random() * 2 - 1;
+                
+                if (weatherMode === 'snow') {
+                    this.speed = Math.random() * 2 + 1;
+                    this.size = Math.random() * 3 + 2;
+                }
+            }
+
+            update() {
+                this.y += this.speed;
+                this.x += this.drift;
+
+                if (weatherMode === 'snow') {
+                    this.drift += Math.sin(this.y * 0.01) * 0.01;
+                }
+
+                if (this.y > height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                if (weatherMode === 'rain') {
+                    ctx.strokeStyle = 'rgba(174, 194, 224, 0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.x + this.drift, this.y + 15);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = weatherMode === 'rain' ? 300 : 200;
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        function setWeather(mode) {
+            weatherMode = mode;
+            document.getElementById('rainBtn').classList.toggle('active', mode === 'rain');
+            document.getElementById('snowBtn').classList.toggle('active', mode === 'snow');
+            initParticles();
+        }
+
+        // Toggle weather on background click
+        document.addEventListener('click', (e) => {
+            if (e.target === document.body || e.target.classList.contains('bg-cinematic') || e.target.classList.contains('vignette')) {
+                setWeather(weatherMode === 'rain' ? 'snow' : 'rain');
+            }
+        });
+
+        // Initialize
+        initParticles();
+        animate();
+        updateBatteryUI(); // Set initial state
+
+    </script>
+</body>
+</html>
