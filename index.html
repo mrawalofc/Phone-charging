@@ -3,114 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xiaomi HyperCharge Experience</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>3D Minimalist Gallery</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700&display=swap');
-
-        :root {
-            --mi-orange: #FF6900;
-            --mi-blue: #00D2FF;
-            --mi-dark: #0a0a0a;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
-            background-color: #050505;
-            font-family: 'Inter', sans-serif;
-            cursor: crosshair;
+            background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0f0f1e);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: #e0e0e0;
         }
 
-        /* Cinematic Background */
-        .bg-cinematic {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000000 100%);
-            z-index: -2;
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        .vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, transparent 40%, #000000 100%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* Phone Container with 3D Tilt */
-        .scene {
-            perspective: 1000px;
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            z-index: 1;
         }
 
-        .phone-wrapper {
-            position: relative;
-            width: 320px;
-            height: 640px;
-            transform-style: preserve-3d;
-            transition: transform 0.1s ease-out;
-            cursor: pointer;
+        canvas {
+            display: block;
         }
 
-        /* The Phone Body */
-        .phone-frame {
-            position: absolute;
-            inset: 0;
-            border-radius: 40px;
-            background: linear-gradient(145deg, #2a2a2a, #000000);
-            box-shadow: 
-                0 0 0 2px #333,
-                0 20px 50px rgba(0,0,0,0.8),
-                0 0 100px rgba(0, 210, 255, 0.1);
-            overflow: hidden;
-            border: 4px solid #1a1a1a;
-        }
-
-        /* Screen Reflection */
-        .phone-frame::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.05) 45%, transparent 50%);
-            transform: rotate(30deg);
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        /* Screen Content */
-        .screen {
-            position: absolute;
-            inset: 2px;
-            background: #000;
-            border-radius: 36px;
-            overflow: hidden;
+        /* Loading Screen */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 10, 15, 0.95);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            color: white;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
         }
 
-        /* Charging Animation Core */
-        .charging-container {
-            position: relative;
-            width: 200px;
-            height: 200px;
+        #loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            color: #e0e0e0;
+            margin-bottom: 2rem;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid #e0e0e0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Bottom Info */
+        #info-bar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            padding: 12px 32px;
+            font-size: 0.9rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+            user-select: none;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Auto-rotate Button */
+        #auto-rotate-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50px;
+            padding: 12px 28px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        #auto-rotate-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        #auto-rotate-btn.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #fff;
+        }
+
+        /* Detail Modal */
+        #detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .energy-ring {
+        #detail-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-backdrop {
             position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .modal-card {
+            position: relative;
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow: hidden;
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        #detail-modal.visible .modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-image-container {
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .modal-content {
+            padding: 28px 32px 32px;
+        }
+
+        .modal-title {
+            font-size: 1.6rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .modal-description {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.65);
+            font-weight: 300;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        /* Cursor hint */
+        .cursor-hint {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform: translate(-50%, -150%);
+            white-space: nowrap;
+        }
+
+        .cursor-hint.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loading-text">Loading gallery...</div>
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Info Bar -->
+    <div id="info-bar">
+        Drag to rotate &middot; Click painting to enlarge
+    </div>
+
+    <!-- Auto-rotate Toggle -->
+    <button id="auto-rotate-btn">Auto-rotate</button>
+
+    <!-- Hover Hint -->
+    <div class="cursor-hint" id="cursor-hint">View details</div>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div class="modal-image-container">
+                <img class="modal-image" id="modal-image" src="" alt="">
+            </div>
+            <div class="modal-content">
+                <h2 class="modal-title" id="modal-title"></h2>
+                <p class="modal-description" id="modal-description"></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ─── Data ───
+        const galleryData = [
+            {
+                title: "Ethereal Dawn",
+                description: "A study in gradients where warmth meets the void. The soft transition from amber to abyss captures the fleeting moment between night and day, inviting contemplation on the nature of beginnings.",
+                generator: (ctx, w, h) => {
+                    const g = ctx.createLinearGradient(0, 0, w, h);
+                    g.addColorStop(0, '#ff9a56');
+                    g.addColorStop(0.3, '#ff6b6b');
+                    g.addColorStop(0.6, '#4a1942');
+                    g.addColorStop(1, '#0f0f1e');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, w, h);
+                    // Soft orbs
+                    for (let i = 0; i < 5; i++) {
+                        const x = Math.random() * w;
+                        const y = Math.random() * h * 0.6;
+                        const r = 30 + Math.random() * 80;
+                        const og = ctx.createRadialGradient(x, y, 0, x, y, r);
+                        og.addColorStop(0, 'rgba(255,200,150,0.3)');
+                        og.addColorStop(1, 'rgba(255,200,150,0)');
+                        ctx.fillStyle = og;
+                        ctx.beginPath();
+                        ctx.arc(x, y, r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            },
+            {
+                title: "Geometric Solitude",
+                description: "Sharp lines intersecting in an infinite dance. This piece explores the tension between order and chaos, where mathematical precision creates an unexpected emotional resonance.",
+                generator: (ctx, w, h) => {
+                    ctx.fillStyle = '#1a1a2e';
+                    ctx.fillRect(0, 0, w, h);
+                    const colors = ['#e94560', '#533483', '#0f3460', '#16213e'];
+                    for (let i = 0; i < 20; i++) {
+                        ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
+                        ctx.lineWidth = 1 + Math.random() * 3;
+                        ctx.globalAlpha = 0.3 + Math.random() * 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(Math.random() * w, Math.random() * h);
+                        ctx.lineTo(Math.random() * w, Math.random() * h);
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                    // Overlapping circles
+                    for (let i = 0; i < 8; i++) {
+                        ctx.fillStyle = colors[i % colors.length];
+                        ctx.globalAlpha = 0.15;
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * w, Math.random() * h, 20 + Math.random() * 60, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+            },
+            {
+                title: "Oceanic Memory",
+                description: "Deep blues swirl in patterns reminiscent of forgotten tides. The layered textures evoke the mystery of underwater depths, where light refracts into impossible geometries.",
+                generator: (ctx, w, h) => {
+                    const g = ctx.createLinearGradient(0, 0, 0, h);
+                    g.addColorStop(0, '#0f3460');
+                    g.addColorStop(0.5, '#16213e');
+                    g.addColorStop(1, '#1a1a2e');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, w, h);
+                    // Wave lines
+                    for (let y = 0; y < h; y += 8) {
+                        ctx.strokeStyle = `rgba(100, 180, 255, ${0.05 + Math.random() * 0.15})`;
+                        ctx.lineWidth = 1 + Math.random() * 2;
+                        ctx.beginPath();
+                        for (let x = 0; x < w; x += 5) {
+                            const yy = y + Math.sin(x * 0.02 + y * 0.05) * 15;
+                            if (x === 0) ctx.moveTo(x, yy);
+                            else ctx.lineTo(x, yy);
+                        }
+                        ctx.stroke();
+                    }
+                    // Bubbles
+                    for (let i = 0; i < 30; i++) {
+                        const x = Math.random() * w;
+                        const y = Math.random() * h;
+                        const r = 2 + Math.random() * 8;
+                        ctx.strokeStyle = 'rgba(150, 220, 255, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.arc(x, y, r, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            },
+            {
+                title: "Crimson Meridian",
+                description: "A bold vertical statement slicing through darkness. The singular crimson band represents the pulse of existence, a heartbeat rendered in pigment and light against the eternal night.",
+                generator: (ctx, w, h) => {
+                    ctx.fillStyle = '#0a0a0a';
+                    ctx.fillRect(0, 0, w, h);
+                    // Vertical gradient band
+                    const bandW = w * 0.25;
+                    const bandX = (w - bandW) / 2;
+                    const g = ctx.createLinearGradient(bandX, 0, bandX + bandW, 0);
+                    g.addColorStop(0, 'rgba(180, 40, 60, 0)');
+                    g.addColorStop(0.2, 'rgba(200, 50, 70, 0.8)');
+                    g.addColorStop(0.5, 'rgba(220, 60, 80, 1)');
+                    g.addColorStop(0.8, 'rgba(200, 50, 70, 0.8)');
+                    g.addColorStop(1, 'rgba(180, 40, 60, 0)');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(bandX, 0, bandW, h);
+                    // Horizontal subtle lines
+                    for (let i = 0; i < 50; i++) {
+                        const y = Math.random() * h;
+                        ctx.strokeStyle = 'rgba(255, 100, 100, 0.1)';
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(w, y);
+                        ctx.stroke();
+                    }
+                }
+            },
+            {
+                title: "Fractured Light",
+                description: "Shards of luminescence scatter across an obsidian field. Each fragment captures a different wavelength, together forming an incomplete spectrum that hints at invisible colors beyond perception.",
+                generator: (ctx, w, h) => {
+                    ctx.fillStyle = '#050505';
+                    ctx.fillRect(0, 0, w, h);
+                    const shards = [
+                        {c: '#ff6b6b', a: 0.6}, {c: '#feca57', a: 0.5}, {c: '#48dbfb', a: 0.5},
+                        {c: '#ff9ff3', a: 0.4}, {c: '#54a0ff', a: 0.5}, {c: '#5f27cd', a: 0.4}
+                    ];
+                    for (let i = 0; i < 40; i++) {
+                        const shard = shards[Math.floor(Math.random() * shards.length)];
+                        ctx.fillStyle = shard.c;
+                        ctx.globalAlpha = shard.a * (0.3 + Math.random() * 0.7);
+                        ctx.beginPath();
+                        const cx = Math.random() * w;
+                        const cy = Math.random() * h;
+                        const size = 10 + Math.random() * 40;
+                        ctx.moveTo(cx, cy - size);
+                        ctx.lineTo(cx + size * 0.6, cy);
+                        ctx.lineTo(cx, cy + size * 0.3);
+                        ctx.lineTo(cx - size * 0.4, cy);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                    // Glow center
+                    const cg = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/3);
+                    cg.addColorStop(0, 'rgba(255,255,255,0.05)');
+                    cg.addColorStop(1, 'rgba(255,255,255,0)');
+                    ctx.fillStyle = cg;
+                    ctx.fillRect(0, 0, w, h);
+                }
+            },
+            {
+                title: "Silent Aurora",
+                description: "Veils of green and violet drift in an arctic silence. The flowing forms suggest movement frozen in time, a celestial ballet captured in the stillness of polar night.",
+                generator: (ctx, w, h) => {
+                    ctx.fillStyle = '#0b1026';
+                    ctx.fillRect(0, 0, w, h);
+                    // Aurora curves
+                    const colors = ['rgba(100, 255, 150,', 'rgba(150, 100, 255,', 'rgba(100, 200, 255,'];
+                    for (let c = 0; c < 3; c++) {
+                        for (let i = 0; i < 5; i++) {
+                            ctx.strokeStyle = colors[c] + (0.1 + Math.random() * 0.2) + ')';
+                            ctx.lineWidth = 20 + Math.random() * 40;
+                            ctx.lineCap = 'round';
+                            ctx.beginPath();
+                            let x = -50;
+                            let y = h * 0.3 + c * 60 + Math.random() * 50;
+                            ctx.moveTo(x, y);
+                            while (x < w + 50) {
+                                x += 30 + Math.random() * 50;
+                                y += (Math.random() - 0.5) * 60;
+                                ctx.lineTo(x, y);
+                            }
+                            ctx.stroke();
+                        }
+                    }
+                    // Stars
+                    for (let i = 0; i < 100; i++) {
+                        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.8})`;
+                        ctx.beginPath();
+                        ctx.arc(Math.random() * w, Math.random() * h * 0.5, Math.random() * 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            },
+            {
+                title: "Monolith",
+                description: "A solitary form rises from the mist, ancient and unknowable. The minimalist composition strips away all distraction, leaving only the profound weight of presence and the silence between forms.",
+                generator: (ctx, w, h) => {
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(0, 0, w, h);
+                    // Mist
+                    const mg = ctx.createLinearGradient(0, h * 0.6, 0, h);
+                    mg.addColorStop(0, 'rgba(200, 200, 220, 0)');
+                    mg.addColorStop(1, 'rgba(200, 200, 220, 0.15)');
+                    ctx.fillStyle = mg;
+                    ctx.fillRect(0, h * 0.6, w, h * 0.4);
+                    // Monolith
+                    const mw = w * 0.15;
+                    const mh = h * 0.5;
+                    const mx = (w - mw) / 2;
+                    const my = h * 0            position: absolute;
             border-radius: 50%;
             border: 2px solid transparent;
             border-top-color: var(--mi-blue);
