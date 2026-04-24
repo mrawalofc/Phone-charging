@@ -1,976 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Minimalist Gallery</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>3D Minimalist Gallery</title>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0f0f1e);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-            color: #e0e0e0;
-        }
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
 
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+  body {
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at top, #1a1a2e, #0f0f1a);
+    color: white;
+  }
 
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-        }
+  #loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    opacity: 0.8;
+  }
 
-        canvas {
-            display: block;
-        }
+  #scene {
+    width: 100%;
+    height: 100%;
+    perspective: 1200px;
+    display: none;
+  }
 
-        /* Loading Screen */
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(10, 10, 15, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
-        }
+  #gallery {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    transform-style: preserve-3d;
+    transition: transform 0.1s linear;
+  }
 
-        #loading-overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
+  .frame {
+    position: absolute;
+    width: 220px;
+    height: 300px;
+    left: 50%;
+    top: 50%;
+    transform-style: preserve-3d;
+    margin: -150px 0 0 -110px;
+    border-radius: 15px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
 
-        .loading-text {
-            font-size: 1.5rem;
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            color: #e0e0e0;
-            margin-bottom: 2rem;
-        }
+  .frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-top: 2px solid #e0e0e0;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+  .frame:hover {
+    transform: scale(1.08);
+  }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+  #info {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
 
-        /* Bottom Info */
-        #info-bar {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50px;
-            padding: 12px 32px;
-            font-size: 0.9rem;
-            font-weight: 300;
-            letter-spacing: 0.05em;
-            color: rgba(255, 255, 255, 0.7);
-            pointer-events: none;
-            user-select: none;
-            transition: opacity 0.5s ease;
-        }
+  #toggleRotate {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.1);
+    color: white;
+  }
 
-        /* Auto-rotate Button */
-        #auto-rotate-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 50px;
-            padding: 12px 28px;
-            font-size: 0.85rem;
-            font-weight: 400;
-            letter-spacing: 0.08em;
-            color: rgba(255, 255, 255, 0.8);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            outline: none;
-        }
+  #card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 320px;
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: 0.3s;
+    text-align: center;
+  }
 
-        #auto-rotate-btn:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
+  #card.active {
+    transform: translate(-50%, -50%) scale(1);
+  }
 
-        #auto-rotate-btn.active {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.4);
-            color: #fff;
-        }
+  #card img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
 
-        /* Detail Modal */
-        #detail-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 100;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+  #card h3 {
+    margin-bottom: 10px;
+  }
 
-        #detail-modal.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-backdrop {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .modal-card {
-            position: relative;
-            background: rgba(20, 20, 30, 0.6);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 24px;
-            padding: 0;
-            max-width: 500px;
-            width: 90%;
-            max-height: 85vh;
-            overflow: hidden;
-            transform: translateY(30px) scale(0.95);
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        #detail-modal.visible .modal-card {
-            transform: translateY(0) scale(1);
-        }
-
-        .modal-image-container {
-            width: 100%;
-            height: 300px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .modal-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .modal-content {
-            padding: 28px 32px 32px;
-        }
-
-        .modal-title {
-            font-size: 1.6rem;
-            font-weight: 300;
-            letter-spacing: 0.05em;
-            margin-bottom: 12px;
-            color: #fff;
-        }
-
-        .modal-description {
-            font-size: 0.95rem;
-            line-height: 1.7;
-            color: rgba(255, 255, 255, 0.65);
-            font-weight: 300;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            z-index: 10;
-        }
-
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: rotate(90deg);
-        }
-
-        /* Cursor hint */
-        .cursor-hint {
-            position: fixed;
-            pointer-events: none;
-            z-index: 50;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.8);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            transform: translate(-50%, -150%);
-            white-space: nowrap;
-        }
-
-        .cursor-hint.visible {
-            opacity: 1;
-        }
-    </style>
+  #close {
+    margin-top: 10px;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+</style>
 </head>
-<body>
-    <!-- Loading Overlay -->
-    <div id="loading-overlay">
-        <div class="loading-text">Loading gallery...</div>
-        <div class="loading-spinner"></div>
-    </div>
 
-    <!-- 3D Canvas -->
-    <div id="canvas-container"></div>
-
-    <!-- Info Bar -->
-    <div id="info-bar">
-        Drag to rotate &middot; Click painting to enlarge
-    </div>
-
-    <!-- Auto-rotate Toggle -->
-    <button id="auto-rotate-btn">Auto-rotate</button>
-
-    <!-- Hover Hint -->
-    <div class="cursor-hint" id="cursor-hint">View details</div>
-
-    <!-- Detail Modal -->
-    <div id="detail-modal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-card">
-            <button class="modal-close" id="modal-close">&times;</button>
-            <div class="modal-image-container">
-                <img class="modal-image" id="modal-image" src="" alt="">
-            </div>
-            <div class="modal-content">
-                <h2 class="modal-title" id="modal-title"></h2>
-                <p class="modal-description" id="modal-description"></p>
-            </div>
-        </div>
-    </div>
-
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-    }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        // ─── Data ───
-        const galleryData = [
-            {
-                title: "Ethereal Dawn",
-                description: "A study in gradients where warmth meets the void. The soft transition from amber to abyss captures the fleeting moment between night and day, inviting contemplation on the nature of beginnings.",
-                generator: (ctx, w, h) => {
-                    const g = ctx.createLinearGradient(0, 0, w, h);
-                    g.addColorStop(0, '#ff9a56');
-                    g.addColorStop(0.3, '#ff6b6b');
-                    g.addColorStop(0.6, '#4a1942');
-                    g.addColorStop(1, '#0f0f1e');
-                    ctx.fillStyle = g;
-                    ctx.fillRect(0, 0, w, h);
-                    // Soft orbs
-                    for (let i = 0; i < 5; i++) {
-                        const x = Math.random() * w;
-                        const y = Math.random() * h * 0.6;
-                        const r = 30 + Math.random() * 80;
-                        const og = ctx.createRadialGradient(x, y, 0, x, y, r);
-                        og.addColorStop(0, 'rgba(255,200,150,0.3)');
-                        og.addColorStop(1, 'rgba(255,200,150,0)');
-                        ctx.fillStyle = og;
-                        ctx.beginPath();
-                        ctx.arc(x, y, r, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-            },
-            {
-                title: "Geometric Solitude",
-                description: "Sharp lines intersecting in an infinite dance. This piece explores the tension between order and chaos, where mathematical precision creates an unexpected emotional resonance.",
-                generator: (ctx, w, h) => {
-                    ctx.fillStyle = '#1a1a2e';
-                    ctx.fillRect(0, 0, w, h);
-                    const colors = ['#e94560', '#533483', '#0f3460', '#16213e'];
-                    for (let i = 0; i < 20; i++) {
-                        ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
-                        ctx.lineWidth = 1 + Math.random() * 3;
-                        ctx.globalAlpha = 0.3 + Math.random() * 0.5;
-                        ctx.beginPath();
-                        ctx.moveTo(Math.random() * w, Math.random() * h);
-                        ctx.lineTo(Math.random() * w, Math.random() * h);
-                        ctx.stroke();
-                    }
-                    ctx.globalAlpha = 1;
-                    // Overlapping circles
-                    for (let i = 0; i < 8; i++) {
-                        ctx.fillStyle = colors[i % colors.length];
-                        ctx.globalAlpha = 0.15;
-                        ctx.beginPath();
-                        ctx.arc(Math.random() * w, Math.random() * h, 20 + Math.random() * 60, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.globalAlpha = 1;
-                }
-            },
-            {
-                title: "Oceanic Memory",
-                description: "Deep blues swirl in patterns reminiscent of forgotten tides. The layered textures evoke the mystery of underwater depths, where light refracts into impossible geometries.",
-                generator: (ctx, w, h) => {
-                    const g = ctx.createLinearGradient(0, 0, 0, h);
-                    g.addColorStop(0, '#0f3460');
-                    g.addColorStop(0.5, '#16213e');
-                    g.addColorStop(1, '#1a1a2e');
-                    ctx.fillStyle = g;
-                    ctx.fillRect(0, 0, w, h);
-                    // Wave lines
-                    for (let y = 0; y < h; y += 8) {
-                        ctx.strokeStyle = `rgba(100, 180, 255, ${0.05 + Math.random() * 0.15})`;
-                        ctx.lineWidth = 1 + Math.random() * 2;
-                        ctx.beginPath();
-                        for (let x = 0; x < w; x += 5) {
-                            const yy = y + Math.sin(x * 0.02 + y * 0.05) * 15;
-                            if (x === 0) ctx.moveTo(x, yy);
-                            else ctx.lineTo(x, yy);
-                        }
-                        ctx.stroke();
-                    }
-                    // Bubbles
-                    for (let i = 0; i < 30; i++) {
-                        const x = Math.random() * w;
-                        const y = Math.random() * h;
-                        const r = 2 + Math.random() * 8;
-                        ctx.strokeStyle = 'rgba(150, 220, 255, 0.3)';
-                        ctx.lineWidth = 1;
-                        ctx.beginPath();
-                        ctx.arc(x, y, r, 0, Math.PI * 2);
-                        ctx.stroke();
-                    }
-                }
-            },
-            {
-                title: "Crimson Meridian",
-                description: "A bold vertical statement slicing through darkness. The singular crimson band represents the pulse of existence, a heartbeat rendered in pigment and light against the eternal night.",
-                generator: (ctx, w, h) => {
-                    ctx.fillStyle = '#0a0a0a';
-                    ctx.fillRect(0, 0, w, h);
-                    // Vertical gradient band
-                    const bandW = w * 0.25;
-                    const bandX = (w - bandW) / 2;
-                    const g = ctx.createLinearGradient(bandX, 0, bandX + bandW, 0);
-                    g.addColorStop(0, 'rgba(180, 40, 60, 0)');
-                    g.addColorStop(0.2, 'rgba(200, 50, 70, 0.8)');
-                    g.addColorStop(0.5, 'rgba(220, 60, 80, 1)');
-                    g.addColorStop(0.8, 'rgba(200, 50, 70, 0.8)');
-                    g.addColorStop(1, 'rgba(180, 40, 60, 0)');
-                    ctx.fillStyle = g;
-                    ctx.fillRect(bandX, 0, bandW, h);
-                    // Horizontal subtle lines
-                    for (let i = 0; i < 50; i++) {
-                        const y = Math.random() * h;
-                        ctx.strokeStyle = 'rgba(255, 100, 100, 0.1)';
-                        ctx.lineWidth = 0.5;
-                        ctx.beginPath();
-                        ctx.moveTo(0, y);
-                        ctx.lineTo(w, y);
-                        ctx.stroke();
-                    }
-                }
-            },
-            {
-                title: "Fractured Light",
-                description: "Shards of luminescence scatter across an obsidian field. Each fragment captures a different wavelength, together forming an incomplete spectrum that hints at invisible colors beyond perception.",
-                generator: (ctx, w, h) => {
-                    ctx.fillStyle = '#050505';
-                    ctx.fillRect(0, 0, w, h);
-                    const shards = [
-                        {c: '#ff6b6b', a: 0.6}, {c: '#feca57', a: 0.5}, {c: '#48dbfb', a: 0.5},
-                        {c: '#ff9ff3', a: 0.4}, {c: '#54a0ff', a: 0.5}, {c: '#5f27cd', a: 0.4}
-                    ];
-                    for (let i = 0; i < 40; i++) {
-                        const shard = shards[Math.floor(Math.random() * shards.length)];
-                        ctx.fillStyle = shard.c;
-                        ctx.globalAlpha = shard.a * (0.3 + Math.random() * 0.7);
-                        ctx.beginPath();
-                        const cx = Math.random() * w;
-                        const cy = Math.random() * h;
-                        const size = 10 + Math.random() * 40;
-                        ctx.moveTo(cx, cy - size);
-                        ctx.lineTo(cx + size * 0.6, cy);
-                        ctx.lineTo(cx, cy + size * 0.3);
-                        ctx.lineTo(cx - size * 0.4, cy);
-                        ctx.closePath();
-                        ctx.fill();
-                    }
-                    ctx.globalAlpha = 1;
-                    // Glow center
-                    const cg = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w/3);
-                    cg.addColorStop(0, 'rgba(255,255,255,0.05)');
-                    cg.addColorStop(1, 'rgba(255,255,255,0)');
-                    ctx.fillStyle = cg;
-                    ctx.fillRect(0, 0, w, h);
-                }
-            },
-            {
-                title: "Silent Aurora",
-                description: "Veils of green and violet drift in an arctic silence. The flowing forms suggest movement frozen in time, a celestial ballet captured in the stillness of polar night.",
-                generator: (ctx, w, h) => {
-                    ctx.fillStyle = '#0b1026';
-                    ctx.fillRect(0, 0, w, h);
-                    // Aurora curves
-                    const colors = ['rgba(100, 255, 150,', 'rgba(150, 100, 255,', 'rgba(100, 200, 255,'];
-                    for (let c = 0; c < 3; c++) {
-                        for (let i = 0; i < 5; i++) {
-                            ctx.strokeStyle = colors[c] + (0.1 + Math.random() * 0.2) + ')';
-                            ctx.lineWidth = 20 + Math.random() * 40;
-                            ctx.lineCap = 'round';
-                            ctx.beginPath();
-                            let x = -50;
-                            let y = h * 0.3 + c * 60 + Math.random() * 50;
-                            ctx.moveTo(x, y);
-                            while (x < w + 50) {
-                                x += 30 + Math.random() * 50;
-                                y += (Math.random() - 0.5) * 60;
-                                ctx.lineTo(x, y);
-                            }
-                            ctx.stroke();
-                        }
-                    }
-                    // Stars
-                    for (let i = 0; i < 100; i++) {
-                        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.8})`;
-                        ctx.beginPath();
-                        ctx.arc(Math.random() * w, Math.random() * h * 0.5, Math.random() * 1.5, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-            },
-            {
-                title: "Monolith",
-                description: "A solitary form rises from the mist, ancient and unknowable. The minimalist composition strips away all distraction, leaving only the profound weight of presence and the silence between forms.",
-                generator: (ctx, w, h) => {
-                    ctx.fillStyle = '#111';
-                    ctx.fillRect(0, 0, w, h);
-                    // Mist
-                    const mg = ctx.createLinearGradient(0, h * 0.6, 0, h);
-                    mg.addColorStop(0, 'rgba(200, 200, 220, 0)');
-                    mg.addColorStop(1, 'rgba(200, 200, 220, 0.15)');
-                    ctx.fillStyle = mg;
-                    ctx.fillRect(0, h * 0.6, w, h * 0.4);
-                    // Monolith
-                    const mw = w * 0.15;
-                    const mh = h * 0.5;
-                    const mx = (w - mw) / 2;
-                    const my = h * 0            position: absolute;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            border-top-color: var(--mi-blue);
-            border-right-color: rgba(0, 210, 255, 0.3);
-            animation: spin 3s linear infinite;
-        }
-
-        .ring-1 { width: 100%; height: 100%; animation-duration: 3s; box-shadow: 0 0 20px rgba(0, 210, 255, 0.2); }
-        .ring-2 { width: 80%; height: 80%; animation-duration: 5s; animation-direction: reverse; border-top-color: #fff; }
-        .ring-3 { width: 60%; height: 60%; animation-duration: 2s; border-style: dashed; opacity: 0.5; }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        /* Liquid Fill Effect */
-        .liquid-bg {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0%;
-            background: linear-gradient(to top, rgba(0, 210, 255, 0.2), transparent);
-            transition: height 0.3s ease;
-            z-index: 0;
-        }
-
-        .percentage {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 4rem;
-            font-weight: 700;
-            background: linear-gradient(to bottom, #fff, #aaa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            z-index: 2;
-            position: relative;
-            text-shadow: 0 0 30px rgba(0, 210, 255, 0.5);
-        }
-
-        .charging-text {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--mi-blue);
-            opacity: 0.8;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; text-shadow: 0 0 10px var(--mi-blue); }
-        }
-
-        /* Cable */
-        .cable {
-            position: absolute;
-            bottom: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 12px;
-            height: 100px;
-            background: #333;
-            z-index: -1;
-            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        .cable::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 24px;
-            height: 20px;
-            background: #555;
-            border-radius: 4px;
-        }
-
-        .cable.connected {
-            bottom: -20px;
-        }
-
-        /* Weather Canvas */
-        #weatherCanvas {
-            position: absolute;
-            inset: 0;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* UI Hints */
-        .hint {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255,255,255,0.3);
-            font-size: 0.8rem;
-            text-align: center;
-            pointer-events: none;
-            letter-spacing: 1px;
-        }
-
-        .mode-indicator {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            display: flex;
-            gap: 10px;
-            z-index: 50;
-        }
-
-        .mode-btn {
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.5);
-            border-radius: 20px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            backdrop-filter: blur(10px);
-        }
-
-        .mode-btn.active {
-            background: rgba(0, 210, 255, 0.2);
-            border-color: var(--mi-blue);
-            color: white;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
-        }
-
-        /* Glitch Effect for Text */
-        .glitch {
-            position: relative;
-        }
-        
-        .status-badge {
-            position: absolute;
-            top: 30px;
-            padding: 6px 12px;
-            background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            font-size: 0.7rem;
-            color: #aaa;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            backdrop-filter: blur(5px);
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #333;
-            transition: background 0.3s;
-        }
-
-        .status-dot.active {
-            background: #00ff88;
-            box-shadow: 0 0 8px #00ff88;
-        }
-
-    </style>
-</head>
 <body>
 
-    <!-- Background Elements -->
-    <div class="bg-cinematic"></div>
-    <div class="vignette"></div>
-    <canvas id="weatherCanvas"></canvas>
+<div id="loader">Loading gallery...</div>
 
-    <!-- UI Controls -->
-    <div class="mode-indicator">
-        <button class="mode-btn active" id="rainBtn" onclick="setWeather('rain')">RAIN</button>
-        <button class="mode-btn" id="snowBtn" onclick="setWeather('snow')">SNOW</button>
-    </div>
+<div id="scene">
+  <div id="gallery"></div>
 
-    <div class="hint">
-        CLICK PHONE TO TOGGLE CHARGING • CLICK ANYWHERE FOR WEATHER
-    </div>
+  <div id="info">
+    Drag to rotate • Click artwork to enlarge
+  </div>
 
-    <!-- Main Scene -->
-    <div class="scene" id="scene">
-        <div class="phone-wrapper" id="phone">
-            <div class="cable" id="cable"></div>
-            
-            <div class="phone-frame">
-                <div class="screen">
-                    
-                    <!-- Status -->
-                    <div class="status-badge">
-                        <div class="status-dot" id="statusDot"></div>
-                        <span id="statusText">DISCONNECTED</span>
-                    </div>
+  <button id="toggleRotate">Auto-rotate</button>
+</div>
 
-                    <!-- Time -->
-                    <div style="position: absolute; top: 60px; font-size: 1.2rem; opacity: 0.6; font-weight: 300;">
-                        14:20
-                    </div>
+<div id="card">
+  <img id="cardImg"/>
+  <h3 id="cardTitle"></h3>
+  <p id="cardDesc"></p>
+  <div id="close">Close</div>
+</div>
 
-                    <!-- Charging Animation -->
-                    <div class="charging-container">
-                        <div class="liquid-bg" id="liquid"></div>
-                        <div class="energy-ring ring-1"></div>
-                        <div class="energy-ring ring-2"></div>
-                        <div class="energy-ring ring-3"></div>
-                        <div class="percentage" id="percent">0%</div>
-                    </div>
+<script>
+  const gallery = document.getElementById("gallery");
+  const loader = document.getElementById("loader");
+  const scene = document.getElementById("scene");
+  const toggleBtn = document.getElementById("toggleRotate");
 
-                    <div class="charging-text" id="chargeLabel">HyperCharge</div>
+  const card = document.getElementById("card");
+  const cardImg = document.getElementById("cardImg");
+  const cardTitle = document.getElementById("cardTitle");
+  const cardDesc = document.getElementById("cardDesc");
 
-                    <!-- Battery Stats -->
-                    <div style="position: absolute; bottom: 60px; display: flex; gap: 30px; text-align: center;">
-                        <div>
-                            <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 4px;">VOLTAGE</div>
-                            <div style="font-weight: 600;">5.2V</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 4px;">CURRENT</div>
-                            <div style="font-weight: 600;" id="current">0.0A</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 4px;">TEMP</div>
-                            <div style="font-weight: 600;">34°C</div>
-                        </div>
-                    </div>
+  const images = [
+    {src: "https://picsum.photos/300/400?1", title: "Abstract Light", desc: "A study of color and motion."},
+    {src: "https://picsum.photos/300/400?2", title: "Urban Mood", desc: "Minimal city expression."},
+    {src: "https://picsum.photos/300/400?3", title: "Silent Nature", desc: "Stillness in green tones."},
+    {src: "https://picsum.photos/300/400?4", title: "Dark Waves", desc: "Energy within darkness."},
+    {src: "https://picsum.photos/300/400?5", title: "Golden Frame", desc: "Warm light reflections."},
+    {src: "https://picsum.photos/300/400?6", title: "Minimal Form", desc: "Shape and space harmony."}
+  ];
 
-                </div>
-            </div>
-        </div>
-    </div>
+  let angle = 0;
+  let autoRotate = true;
 
-    <script>
-        /* --- Audio Engine (Synthesized Sounds) --- */
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+  function createGallery() {
+    const count = images.length;
+    const radius = 500;
 
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+    images.forEach((img, i) => {
+      const frame = document.createElement("div");
+      frame.className = "frame";
 
-            if (type === 'connect') {
-                // High-tech charging start sound
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-                osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.3);
-                
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.5);
-            } else if (type === 'disconnect') {
-                // Power down sound
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-                
-                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.2);
-            }
-        }
+      const image = document.createElement("img");
+      image.src = img.src;
 
-        /* --- Charging Logic --- */
-        let isCharging = false;
-        let batteryLevel = 0;
-        let chargeInterval;
-        const phoneEl = document.getElementById('phone');
-        const cableEl = document.getElementById('cable');
-        const percentEl = document.getElementById('percent');
-        const liquidEl = document.getElementById('liquid');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const currentEl = document.getElementById('current');
-        const chargeLabel = document.getElementById('chargeLabel');
+      frame.appendChild(image);
 
-        phoneEl.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent weather toggle
-            toggleCharging();
-        });
+      const theta = (360 / count) * i;
+      frame.style.transform = `rotateY(${theta}deg) translateZ(${radius}px)`;
 
-        function toggleCharging() {
-            isCharging = !isCharging;
-            
-            if (isCharging) {
-                playSound('connect');
-                cableEl.classList.add('connected');
-                statusDot.classList.add('active');
-                statusText.innerText = "FAST CHARGING";
-                statusText.style.color = "#00ff88";
-                chargeLabel.style.opacity = "1";
-                currentEl.innerText = "6.2A";
-                
-                // Start charging animation
-                chargeInterval = setInterval(() => {
-                    if (batteryLevel < 100) {
-                        batteryLevel += 1;
-                        updateBatteryUI();
-                    } else {
-                        statusText.innerText = "CHARGED";
-                        currentEl.innerText = "0.0A";
-                    }
-                }, 100);
-            } else {
-                playSound('disconnect');
-                cableEl.classList.remove('connected');
-                statusDot.classList.remove('active');
-                statusText.innerText = "DISCONNECTED";
-                statusText.style.color = "#aaa";
-                chargeLabel.style.opacity = "0.5";
-                currentEl.innerText = "0.0A";
-                clearInterval(chargeInterval);
-            }
-        }
+      frame.onclick = () => {
+        cardImg.src = img.src;
+        cardTitle.innerText = img.title;
+        cardDesc.innerText = img.desc;
+        card.classList.add("active");
+      };
 
-        function updateBatteryUI() {
-            percentEl.innerText = batteryLevel + "%";
-            liquidEl.style.height = batteryLevel + "%";
-            
-            // Color shift based on percentage
-            if (batteryLevel > 80) {
-                liquidEl.style.background = "linear-gradient(to top, rgba(0, 255, 136, 0.3), transparent)";
-                document.querySelector('.percentage').style.textShadow = "0 0 30px rgba(0, 255, 136, 0.5)";
-            } else {
-                liquidEl.style.background = "linear-gradient(to top, rgba(0, 210, 255, 0.2), transparent)";
-                document.querySelector('.percentage').style.textShadow = "0 0 30px rgba(0, 210, 255, 0.5)";
-            }
-        }
+      gallery.appendChild(frame);
+    });
+  }
 
-        /* --- 3D Tilt Effect --- */
-        document.addEventListener('mousemove', (e) => {
-            const x = (window.innerWidth / 2 - e.pageX) / 25;
-            const y = (window.innerHeight / 2 - e.pageY) / 25;
-            phoneEl.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
-        });
+  function animate() {
+    if (autoRotate) angle += 0.1;
+    gallery.style.transform = `rotateY(${angle}deg)`;
+    requestAnimationFrame(animate);
+  }
 
-        /* --- Weather Particle System --- */
-        const canvas = document.getElementById('weatherCanvas');
-        const ctx = canvas.getContext('2d');
-        let width, height;
-        let particles = [];
-        let weatherMode = 'rain'; // 'rain' or 'snow'
+  let isDragging = false;
+  let lastX;
 
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+  scene.addEventListener("mousedown", e => {
+    isDragging = true;
+    lastX = e.clientX;
+  });
 
-        class Particle {
-            constructor() {
-                this.reset();
-            }
+  window.addEventListener("mousemove", e => {
+    if (!isDragging) return;
+    let delta = e.clientX - lastX;
+    angle += delta * 0.3;
+    lastX = e.clientX;
+  });
 
-            reset() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * -height;
-                this.speed = Math.random() * 5 + 5;
-                this.size = Math.random() * 2 + 1;
-                this.drift = Math.random() * 2 - 1;
-                
-                if (weatherMode === 'snow') {
-                    this.speed = Math.random() * 2 + 1;
-                    this.size = Math.random() * 3 + 2;
-                }
-            }
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
 
-            update() {
-                this.y += this.speed;
-                this.x += this.drift;
+  toggleBtn.onclick = () => {
+    autoRotate = !autoRotate;
+    toggleBtn.style.opacity = autoRotate ? 1 : 0.5;
+  };
 
-                if (weatherMode === 'snow') {
-                    this.drift += Math.sin(this.y * 0.01) * 0.01;
-                }
+  document.getElementById("close").onclick = () => {
+    card.classList.remove("active");
+  };
 
-                if (this.y > height) {
-                    this.reset();
-                }
-            }
+  window.onload = () => {
+    setTimeout(() => {
+      loader.style.display = "none";
+      scene.style.display = "block";
+      createGallery();
+      animate();
+    }, 1200);
+  };
+</script>
 
-            draw() {
-                ctx.beginPath();
-                if (weatherMode === 'rain') {
-                    ctx.strokeStyle = 'rgba(174, 194, 224, 0.5)';
-                    ctx.lineWidth = 1;
-                    ctx.moveTo(this.x, this.y);
-                    ctx.lineTo(this.x + this.drift, this.y + 15);
-                    ctx.stroke();
-                } else {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-        }
-
-        function initParticles() {
-            particles = [];
-            const count = weatherMode === 'rain' ? 300 : 200;
-            for (let i = 0; i < count; i++) {
-                particles.push(new Particle());
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animate);
-        }
-
-        function setWeather(mode) {
-            weatherMode = mode;
-            document.getElementById('rainBtn').classList.toggle('active', mode === 'rain');
-            document.getElementById('snowBtn').classList.toggle('active', mode === 'snow');
-            initParticles();
-        }
-
-        // Toggle weather on background click
-        document.addEventListener('click', (e) => {
-            if (e.target === document.body || e.target.classList.contains('bg-cinematic') || e.target.classList.contains('vignette')) {
-                setWeather(weatherMode === 'rain' ? 'snow' : 'rain');
-            }
-        });
-
-        // Initialize
-        initParticles();
-        animate();
-        updateBatteryUI(); // Set initial state
-
-    </script>
 </body>
 </html>
