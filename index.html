@@ -1,17 +1,4 @@
-
-# Read current family.html and modify it for manual save + public viewing
-with open("/mnt/agents/output/family.html", "r", encoding="utf-8") as f:
-    content = f.read()
-
-# The key changes needed:
-# 1. Remove auto-save on every add/edit/delete - only save when admin clicks "Save to Server"
-# 2. Add a "Save Data" button that exports JSON for the admin to upload
-# 3. Add a "Load Default Data" feature so public visitors see pre-loaded family data
-# 4. The page should show data from a JS object (public data) that the admin can update
-
-# Let's create a new version with manual save approach
-
-family_public_html = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -281,7 +268,14 @@ family_public_html = '''<!DOCTYPE html>
             // Example: { id: "1", name: "Father", relation: "Father", birthday: "1975-06-15" },
             // Example: { id: "2", name: "Mother", relation: "Mother", birthday: "1980-09-20" },
             // Add your family members here:
-            
+            const DEFAULT_DATA = [
+    {
+        "id": "1777338777258",
+        "name": "Amwal",
+        "relation": "Other",
+        "birthday": "2000-11-26"
+    }
+];
         ];
         // ============================================================
 
