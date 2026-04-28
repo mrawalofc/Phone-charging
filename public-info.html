@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Birthdays monitoring 👨‍👩‍👧‍👦</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600;700&family=Great+Vibes&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a0a2e 0%, #4a1942 25%, #893168 50%, #c44569 75%, #f8b500 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            overflow-x: hidden;
+            font-family: 'Hind Siliguri', 'Poppins', sans-serif;
+            position: relative; color: white;
+        }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .hearts-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 1; }
+        .heart { position: absolute; color: rgba(255,255,255,0.25); font-size: 20px; animation: floatUp linear infinite; bottom: -50px; }
+        @keyframes floatUp { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.8; } 100% { transform: translateY(-100vh) rotate(360deg) scale(0.5); opacity: 0; } }
+        .sparkle { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; animation: sparkle 3s ease-in-out infinite; }
+        @keyframes sparkle { 0%, 100% { opacity: 0; transform: scale(0); } 50% { opacity: 1; transform: scale(1); } }
+        .navbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 200; background: rgba(0,0,0,0.25); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0 20px; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+        .nav-logo { font-family: 'Great Vibes', cursive; font-size: 1.8rem; color: #fff; text-shadow: 0 0 15px rgba(255,105,180,0.8); text-decoration: none; }
+        .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+        .nav-link { padding: 7px 14px; border: none; background: transparent; color: rgba(255,255,255,0.7); font-family: 'Poppins', sans-serif; font-size: 0.82rem; cursor: pointer; border-radius: 20px; transition: all 0.3s ease; text-decoration: none; }
+        .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+        .nav-link.active { background: rgba(255,105,180,0.4); color: white; font-weight: 600; }
+        .lang-toggle { position: fixed; top: 75px; right: 20px; z-index: 100; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 30px; padding: 5px; display: flex; gap: 5px; border: 1px solid rgba(255,255,255,0.2); }
+        .lang-btn { padding: 6px 16px; border: none; background: transparent; color: white; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer; border-radius: 25px; transition: all 0.3s ease; }
+        .lang-btn.active { background: rgba(255,255,255,0.3); font-weight: 600; }
+        .lang-btn:hover { background: rgba(255,255,255,0.2); }
+        .page-header { text-align: center; padding: 100px 20px 20px; position: relative; z-index: 10; }
+        .page-header h2 { font-family: 'Great Vibes', cursive; font-size: 3rem; text-shadow: 0 0 20px rgba(255,105,180,0.6); margin-bottom: 10px; }
+        .page-header p { color: rgba(255,255,255,0.7); font-size: 1rem; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px 20px 60px; position: relative; z-index: 10; }
+
+        /* Form Styles */
+        .form-card {
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(15px);
+            border-radius: 25px; padding: 30px; border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); margin-bottom: 25px;
+        }
+        .form-title { font-family: 'Great Vibes', cursive; font-size: 2rem; color: #ffb3d1; margin-bottom: 20px; text-align: center; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+        .form-group input, .form-group select {
+            padding: 12px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1); color: white; font-family: 'Poppins', sans-serif; font-size: 0.95rem;
+            outline: none; transition: all 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: rgba(255,105,180,0.6); background: rgba(255,255,255,0.15); }
+        .form-group input::placeholder { color: rgba(255,255,255,0.4); }
+        .form-group select option { background: #4a1942; color: white; }
+        .btn-row { display: flex; gap: 10px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            padding: 12px 28px; border: none; border-radius: 25px; font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; font-weight: 500;
+        }
+        .btn-primary { background: linear-gradient(135deg, #ff6b9d, #c44569); color: white; box-shadow: 0 5px 20px rgba(196,69,105,0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(196,69,105,0.6); }
+        .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+        .btn-danger { background: rgba(220,53,69,0.7); color: white; }
+        .btn-danger:hover { background: rgba(220,53,69,0.9); }
+        .btn-success { background: rgba(40,167,69,0.7); color: white; }
+        .btn-success:hover { background: rgba(40,167,69,0.9); }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(15px);
+            border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 25px; text-align: center;
+        }
+        .stats-bar h3 { font-family: 'Great Vibes', cursive; font-size: 1.8rem; color: #ffb3d1; margin-bottom: 10px; }
+        .stats-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .stat-item { text-align: center; }
+        .stat-number { font-size: 2.2rem; font-weight: 700; color: #f8b500; text-shadow: 0 0 15px rgba(248,181,0,0.5); }
+        .stat-label { font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+
+        /* Family Cards */
+        .family-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .family-card {
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(15px);
+            border-radius: 25px; padding: 25px; border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; position: relative;
+            transition: transform 0.3s ease;
+        }
+        .family-card:hover { transform: translateY(-5px); }
+        .family-card .fam-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .family-card .fam-name { font-family: 'Great Vibes', cursive; font-size: 1.8rem; color: #ffb3d1; margin-bottom: 5px; }
+        .family-card .fam-relation { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 5px; }
+        .family-card .fam-date { 
+            font-size: 1.05rem; 
+            color: #ffd700; 
+            margin-bottom: 6px; 
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(255,215,0,0.3);
+            letter-spacing: 0.5px;
+        }
+        .family-card .fam-next-bday { 
+            font-size: 0.85rem; 
+            color: #ffb3d1; 
+            margin-bottom: 12px; 
+            font-weight: 500;
+            background: rgba(255,255,255,0.08);
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .family-card .fam-next-bday .bday-label { color: rgba(255,255,255,0.6); font-size: 0.75rem; }
+        .family-card .fam-next-bday .bday-date { color: #ffb3d1; font-weight: 600; }
+        .family-card .fam-age { font-size: 1.3rem; font-weight: 700; color: #f8b500; margin-bottom: 15px; text-shadow: 0 0 10px rgba(248,181,0,0.4); }
+        .countdown-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
+        .count-box {
+            background: linear-gradient(135deg, rgba(255,107,157,0.3), rgba(196,69,105,0.3));
+            border-radius: 14px; padding: 14px 4px; border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .count-num { font-size: 1.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 15px rgba(255,107,157,0.7); }
+        .count-unit { font-size: 0.7rem; color: rgba(255,255,255,0.7); margin-top: 4px; }
+        .card-actions { display: flex; gap: 8px; justify-content: center; }
+        .card-actions .btn { padding: 8px 18px; font-size: 0.8rem; }
+
+        /* Edit Mode */
+        .edit-form { display: none; margin-top: 15px; }
+        .edit-form.active { display: block; }
+        .edit-form .form-group { margin-bottom: 10px; }
+        .edit-form input { width: 100%; }
+
+        .empty-state { text-align: center; padding: 40px; color: rgba(255,255,255,0.5); font-size: 1.1rem; }
+        .saved-badge { position: absolute; top: 15px; right: 15px; background: rgba(40,167,69,0.8); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; display: none; }
+        .saved-badge.show { display: block; animation: fadeOut 2s forwards; animation-delay: 1.5s; }
+        @keyframes fadeOut { to { opacity: 0; } }
+
+        .floating-emoji { position: fixed; font-size: 24px; pointer-events: none; z-index: 5; animation: floatEmoji 10s ease-in-out infinite; }
+        @keyframes floatEmoji { 0%, 100% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(20px,-30px) rotate(10deg); } 50% { transform: translate(-10px,-50px) rotate(-5deg); } 75% { transform: translate(15px,-20px) rotate(5deg); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        @media (max-width: 768px) {
+            .nav-link { padding: 5px 10px; font-size: 0.7rem; }
+            .page-header h2 { font-size: 2.2rem; }
+            .countdown-row { grid-template-columns: repeat(2, 1fr); }
+            .count-num { font-size: 1.3rem; }
+            .family-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            .stats-grid { gap: 15px; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="hearts-container" id="heartsContainer"></div>
+    <nav class="navbar">
+        <div class="nav-inner">
+            <a href="index.html" class="nav-logo">💕 Love World</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">🏠 Home</a>
+                <a href="messages.html" class="nav-link" target="_blank">💌 Messages</a>
+                <a href="gallery.html" class="nav-link" target="_blank">🖼️ Gallery</a>
+                <a href="letter.html" class="nav-link" target="_blank">💌 Letter</a>
+                <a href="countdown.html" class="nav-link">⏳ Countdown</a>
+                <a href="family.html" class="nav-link active">👨‍👩‍👧‍👦 Family</a>
+                <a href="quiz.html" class="nav-link" target="_blank">❓ Quiz</a>
+                <a href="#public-info" class="nav-link">📋 Public Info</a>
+            </div>
+        </div>
+    </nav>
+    <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('bn')">বাংলা</button>
+        <button class="lang-btn" onclick="setLang('en')">English</button>
+    </div>
+    <div class="floating-emoji" style="top: 15%; left: 10%;">👨‍👩‍👧</div>
+    <div class="floating-emoji" style="top: 25%; right: 15%; animation-delay: 2s;">👶</div>
+    <div class="floating-emoji" style="bottom: 20%; left: 20%; animation-delay: 4s;">🏠</div>
+    <div class="floating-emoji" style="bottom: 30%; right: 10%; animation-delay: 6s;">💝</div>
+    <div class="floating-emoji" style="top: 60%; left: 5%; animation-delay: 3s;">🎂</div>
+    <div class="floating-emoji" style="top: 40%; right: 5%; animation-delay: 5s;">🎉</div>
+
+    <div class="page-header">
+        <h2 id="pageTitle">Family Birthdays</h2>
+        <p id="pageSubtitle">Keep track of every precious family member 🎂👨‍👩‍👧‍👦</p>
+    </div>
+
+    <div class="container">
+        <!-- Add Member Form -->
+        <div class="form-card">
+            <div class="form-title" id="formTitle">✨ Add Family Member</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label id="lblName">Name</label>
+                    <input type="text" id="inpName" placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label id="lblRelation">Relationship</label>
+                    <select id="inpRelation">
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Brother">Brother</option>
+                        <option value="Sister">Sister</option>
+                        <option value="Son">Son</option>
+                        <option value="Daughter">Daughter</option>
+                        <option value="Husband">Husband</option>
+                        <option value="Wife">Wife</option>
+                        <option value="Grandfather">Grandfather</option>
+                        <option value="Grandmother">Grandmother</option>
+                        <option value="Uncle">Uncle</option>
+                        <option value="Aunt">Aunt</option>
+                        <option value="Cousin">Cousin</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="lblBirthday">Birthday</label>
+                    <input type="date" id="inpBirthday">
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="addMember()" id="btnAdd">➕ Add Member</button>
+                <button class="btn btn-secondary" onclick="clearForm()" id="btnClear">Clear</button>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <h3 id="statsTitle">Family Overview</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="statTotal">0</div>
+                    <div class="stat-label" id="lblTotalMembers">Total Members</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statUpcoming">0</div>
+                    <div class="stat-label" id="lblUpcoming">Upcoming Birthdays</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statThisMonth">0</div>
+                    <div class="stat-label" id="lblThisMonth">This Month</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Family Members Grid -->
+        <div class="family-grid" id="familyGrid">
+            <!-- Cards injected by JS -->
+        </div>
+
+        <!-- Public Information Form -->
+        <div class="form-card" style="margin-top: 30px; text-align: center;">
+            <div class="form-title">📋 Public Information</div>
+            <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 0.95rem;">Submit public information using the form below</p>
+            <div style="display: flex; justify-content: center; overflow-x: auto;">
+                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdUr7KqMlL2Ouftn8ZNU0Dab0a-EQqeTGpdlNQC5HyYdpT7BA/viewform?embedded=true" width="640" height="915" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 15px; max-width: 100%;">Loading…</iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== LANGUAGE TEXTS ==========
+        const texts = {
+            bn: {
+                pageTitle: "পরিবারের জন্মদিন",
+                pageSubtitle: "প্রতিটি প্রিয় পরিবারের সদস্যের ট্র্যাক রাখুন 🎂👨‍👩‍👧‍👦",
+                formTitle: "✨ পরিবারের সদস্য যোগ করুন",
+                lblName: "নাম", lblRelation: "সম্পর্ক", lblBirthday: "জন্মদিন",
+                btnAdd: "➕ যোগ করুন", btnClear: "মুছুন", btnUpdate: "💾 আপডেট",
+                btnCancel: "বাতিল", btnDelete: "🗑️ মুছুন", btnEdit: "✏️ সম্পাদনা",
+                statsTitle: "পরিবারের সারাংশ",
+                totalMembers: "মোট সদস্য", upcoming: "আসন্ন জন্মদিন", thisMonth: "এই মাসে",
+                age: "বয়স", days: "দিন", hours: "ঘন্টা", minutes: "মিনিট", seconds: "সেকেন্ড",
+                min: "মি.", sec: "সে.", empty: "কোনো সদস্য যোগ করা হয়নি। উপরের ফর্ম ব্যবহার করে পরিবারের সদস্য যোগ করুন!",
+                saved: "সংরক্ষিত!",
+                relations: {
+                    Father: "বাবা", Mother: "মা", Brother: "ভাই", Sister: "বোন",
+                    Son: "ছেলে", Daughter: "মেয়ে", Husband: "স্বামী", Wife: "স্ত্রী",
+                    Grandfather: "দাদা/নানা", Grandmother: "দাদী/নানী",
+                    Uncle: "চাচা/মামা", Aunt: "চাচী/মামী", Cousin: "কাজিন", Other: "অন্যান্য"
+                }
+            },
+            en: {
+                pageTitle: "Family Birthdays",
+                pageSubtitle: "Keep track of every precious family member 🎂👨‍👩‍👧‍👦",
+                formTitle: "✨ Add Family Member",
+                lblName: "Name", lblRelation: "Relationship", lblBirthday: "Birthday",
+                btnAdd: "➕ Add Member", btnClear: "Clear", btnUpdate: "💾 Update",
+                btnCancel: "Cancel", btnDelete: "🗑️ Delete", btnEdit: "✏️ Edit",
+                statsTitle: "Family Overview",
+                totalMembers: "Total Members", upcoming: "Upcoming Birthdays", thisMonth: "This Month",
+                age: "Age", days: "Days", hours: "Hours", minutes: "Minutes", seconds: "Seconds",
+                min: "Min", sec: "Sec", empty: "No members added yet. Use the form above to add family members!",
+                saved: "Saved!",
+                relations: {
+                    Father: "Father", Mother: "Mother", Brother: "Brother", Sister: "Sister",
+                    Son: "Son", Daughter: "Daughter", Husband: "Husband", Wife: "Wife",
+                    Grandfather: "Grandfather", Grandmother: "Grandmother",
+                    Uncle: "Uncle", Aunt: "Aunt", Cousin: "Cousin", Other: "Other"
+                }
+            }
+        };
+        let currentLang = 'bn';
+        let familyMembers = [];
+        let editingId = null;
+        const STORAGE_KEY = 'loveCountdown_familyMembers';
+
+        // ========== LOCAL STORAGE ==========
+        function loadMembers() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    familyMembers = JSON.parse(data);
+                }
+            } catch (e) { console.error('Load error', e); }
+            renderMembers();
+            updateStats();
+        }
+        function saveMembers() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(familyMembers));
+                showSavedBadge();
+            } catch (e) { console.error('Save error', e); }
+            updateStats();
+        }
+        function showSavedBadge() {
+            const badge = document.getElementById('savedBadge');
+            if (badge) {
+                badge.classList.add('show');
+                setTimeout(() => badge.classList.remove('show'), 3000);
+            }
+        }
+
+        // ========== MEMBER CRUD ==========
+        function addMember() {
+            const name = document.getElementById('inpName').value.trim();
+            const relation = document.getElementById('inpRelation').value;
+            const birthday = document.getElementById('inpBirthday').value;
+            if (!name || !birthday) { alert(currentLang === 'bn' ? 'নাম এবং জন্মদিন পূরণ করুন!' : 'Please fill name and birthday!'); return; }
+
+            const member = {
+                id: editingId || Date.now().toString(),
+                name, relation, birthday,
+                createdAt: editingId ? (familyMembers.find(m => m.id === editingId)?.createdAt || Date.now()) : Date.now()
+            };
+
+            if (editingId) {
+                const idx = familyMembers.findIndex(m => m.id === editingId);
+                if (idx !== -1) familyMembers[idx] = member;
+                editingId = null;
+                document.getElementById('btnAdd').textContent = texts[currentLang].btnAdd;
+            } else {
+                familyMembers.push(member);
+            }
+            saveMembers();
+            renderMembers();
+            clearForm();
+        }
+        function deleteMember(id) {
+            const confirmMsg = currentLang === 'bn' ? 'আপনি কি নিশ্চিতভাবে মুছতে চান?' : 'Are you sure you want to delete?';
+            if (confirm(confirmMsg)) {
+                familyMembers = familyMembers.filter(m => m.id !== id);
+                if (editingId === id) { editingId = null; clearForm(); }
+                saveMembers();
+                renderMembers();
+            }
+        }
+        function editMember(id) {
+            const member = familyMembers.find(m => m.id === id);
+            if (!member) return;
+            document.getElementById('inpName').value = member.name;
+            document.getElementById('inpRelation').value = member.relation;
+            document.getElementById('inpBirthday').value = member.birthday;
+            editingId = id;
+            document.getElementById('btnAdd').textContent = texts[currentLang].btnUpdate;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function clearForm() {
+            document.getElementById('inpName').value = '';
+            document.getElementById('inpRelation').value = 'Father';
+            document.getElementById('inpBirthday').value = '';
+            editingId = null;
+            document.getElementById('btnAdd').textContent = texts[currentLang].btnAdd;
+        }
+
+        // ========== RENDERING ==========
+        function getNextBirthday(bdayStr) {
+            const now = new Date();
+            const bday = new Date(bdayStr);
+            let next = new Date(now.getFullYear(), bday.getMonth(), bday.getDate(), 0, 0, 0);
+            if (next < now) {
+                next = new Date(now.getFullYear() + 1, bday.getMonth(), bday.getDate(), 0, 0, 0);
+            }
+            return next;
+        }
+        function getAge(bdayStr) {
+            const now = new Date();
+            const bday = new Date(bdayStr);
+            let age = now.getFullYear() - bday.getFullYear();
+            const hasHad = now.getMonth() > bday.getMonth() || (now.getMonth() === bday.getMonth() && now.getDate() >= bday.getDate());
+            if (!hasHad) age--;
+            return age;
+        }
+        function getCountdownParts(targetDate) {
+            const now = new Date();
+            const diff = targetDate - now;
+            return {
+                days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+                seconds: Math.floor((diff % (1000 * 60)) / 1000)
+            };
+        }
+        function getRelationIcon(relation) {
+            const icons = {
+                Father: '👨', Mother: '👩', Brother: '👦', Sister: '👧',
+                Son: '👶', Daughter: '👧', Husband: '🤵', Wife: '👰',
+                Grandfather: '👴', Grandmother: '👵', Uncle: '👨', Aunt: '👩',
+                Cousin: '🧑', Other: '👤'
+            };
+            return icons[relation] || '👤';
+        }
+        function renderMembers() {
+            const grid = document.getElementById('familyGrid');
+            const t = texts[currentLang];
+            if (familyMembers.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;text-align:center;">' + t.empty + '</div>';
+                return;
+            }
+            grid.innerHTML = familyMembers.map(m => {
+                const nextBday = getNextBirthday(m.birthday);
+                const age = getAge(m.birthday);
+                const cd = getCountdownParts(nextBday);
+                const relLabel = t.relations[m.relation] || m.relation;
+                const dateStr = new Date(m.birthday).toLocaleDateString(currentLang === 'bn' ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                const nextDateStr = nextBday.toLocaleDateString(currentLang === 'bn' ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                const bdayLabel = currentLang === 'bn' ? 'পরবর্তী জন্মদিন' : 'Next Birthday';
+                return `
+                <div class="family-card" id="card-${m.id}">
+                    <div class="saved-badge" id="badge-${m.id}">${t.saved}</div>
+                    <div class="fam-icon">${getRelationIcon(m.relation)}</div>
+                    <div class="fam-name">${m.name}</div>
+                    <div class="fam-relation">${relLabel}</div>
+                    <div class="fam-date">🎂 ${dateStr}</div>
+                    <div class="fam-next-bday"><span class="bday-label">${bdayLabel}:</span> <span class="bday-date">${nextDateStr}</span></div>
+                    <div class="fam-age">${t.age}: ${age}</div>
+                    <div class="days-left-badge" style="
+                        background: linear-gradient(135deg, rgba(255,107,157,0.4), rgba(196,69,105,0.4));
+                        border: 1px solid rgba(255,255,255,0.25);
+                        border-radius: 25px;
+                        padding: 8px 18px;
+                        margin-bottom: 12px;
+                        display: inline-block;
+                        font-size: 0.9rem;
+                        font-weight: 600;
+                        color: #fff;
+                        text-shadow: 0 0 10px rgba(255,107,157,0.5);
+                    ">${cd.days} ${currentLang === 'bn' ? 'দিন বাকি' : 'days left'}</div>
+                    <div class="countdown-row">
+                        <div class="count-box"><div class="count-num">${String(cd.days).padStart(2,'0')}</div><div class="count-unit">${t.days}</div></div>
+                        <div class="count-box"><div class="count-num">${String(cd.hours).padStart(2,'0')}</div><div class="count-unit">${t.hours}</div></div>
+                        <div class="count-box"><div class="count-num">${String(cd.minutes).padStart(2,'0')}</div><div class="count-unit">${t.min}</div></div>
+                        <div class="count-box"><div class="count-num">${String(cd.seconds).padStart(2,'0')}</div><div class="count-unit">${t.sec}</div></div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-success" onclick="editMember('${m.id}')">${t.btnEdit}</button>
+                        <button class="btn btn-danger" onclick="deleteMember('${m.id}')">${t.btnDelete}</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        function updateStats() {
+            const t = texts[currentLang];
+            const now = new Date();
+            document.getElementById('statTotal').textContent = familyMembers.length;
+
+            let upcoming = 0, thisMonth = 0;
+            familyMembers.forEach(m => {
+                const bday = new Date(m.birthday);
+                const next = getNextBirthday(m.birthday);
+                const daysLeft = Math.floor((next - now) / (1000 * 60 * 60 * 24));
+                if (daysLeft <= 30) upcoming++;
+                if (bday.getMonth() === now.getMonth()) thisMonth++;
+            });
+            document.getElementById('statUpcoming').textContent = upcoming;
+            document.getElementById('statThisMonth').textContent = thisMonth;
+        }
+        function updateCountdowns() {
+            familyMembers.forEach(m => {
+                const card = document.getElementById('card-' + m.id);
+                if (!card) return;
+                const nextBday = getNextBirthday(m.birthday);
+                const cd = getCountdownParts(nextBday);
+                const nums = card.querySelectorAll('.count-num');
+                if (nums.length === 4) {
+                    nums[0].textContent = String(cd.days).padStart(2, '0');
+                    nums[1].textContent = String(cd.hours).padStart(2, '0');
+                    nums[2].textContent = String(cd.minutes).padStart(2, '0');
+                    nums[3].textContent = String(cd.seconds).padStart(2, '0');
+                }
+                const ageEl = card.querySelector('.fam-age');
+                if (ageEl) ageEl.textContent = texts[currentLang].age + ': ' + getAge(m.birthday);
+            });
+        }
+
+        // ========== LANGUAGE ==========
+        function setLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            const t = texts[lang];
+            document.getElementById('pageTitle').textContent = t.pageTitle;
+            document.getElementById('pageSubtitle').textContent = t.pageSubtitle;
+            document.getElementById('formTitle').textContent = t.formTitle;
+            document.getElementById('lblName').textContent = t.lblName;
+            document.getElementById('lblRelation').textContent = t.lblRelation;
+            document.getElementById('lblBirthday').textContent = t.lblBirthday;
+            if (!editingId) document.getElementById('btnAdd').textContent = t.btnAdd;
+            else document.getElementById('btnAdd').textContent = t.btnUpdate;
+            document.getElementById('btnClear').textContent = t.btnClear;
+            document.getElementById('statsTitle').textContent = t.statsTitle;
+            document.getElementById('lblTotalMembers').textContent = t.totalMembers;
+            document.getElementById('lblUpcoming').textContent = t.upcoming;
+            document.getElementById('lblThisMonth').textContent = t.thisMonth;
+            renderMembers();
+            updateStats();
+        }
+
+        // ========== EFFECTS ==========
+        function createHearts() {
+            const container = document.getElementById('heartsContainer');
+            const heartSymbols = ['❤️','💕','💖','💗','💓','💝','💘','💞'];
+            for (let i = 0; i < 25; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.innerHTML = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.animationDuration = (Math.random() * 10 + 8) + 's';
+                heart.style.animationDelay = Math.random() * 10 + 's';
+                heart.style.fontSize = (Math.random() * 20 + 15) + 'px';
+                container.appendChild(heart);
+            }
+        }
+        function createSparkles() {
+            const container = document.getElementById('heartsContainer');
+            for (let i = 0; i < 40; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animationDelay = Math.random() * 3 + 's';
+                sparkle.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                container.appendChild(sparkle);
+            }
+        }
+
+        // ========== INIT ==========
+        createHearts();
+        createSparkles();
+        loadMembers();
+        setInterval(() => { updateCountdowns(); }, 1000);
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            document.body.style.backgroundPosition = `${x*50}% ${y*50}%`;
+        });
+    </script>
+</body>
+</html>
